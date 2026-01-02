@@ -6,15 +6,15 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/login/actions";
 
-const navItems = [
-  { href: "/", label: "홈" },
-  { href: "/cities", label: "도시목록" },
-  { href: "/compare", label: "비교하기" },
-  { href: "/community", label: "커뮤니티" },
-];
+const navItems: { href: string; label: string }[] = [];
 
-export function Header() {
+export async function Header() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -39,12 +39,31 @@ export function Header() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="ghost" size="sm">
-            로그인
-          </Button>
-          <Button size="sm">
-            회원가입
-          </Button>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {user.email}
+              </span>
+              <form action={logout}>
+                <Button variant="ghost" size="sm" type="submit">
+                  로그아웃
+                </Button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  로그인
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">
+                  회원가입
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -67,12 +86,31 @@ export function Header() {
                 </Link>
               ))}
               <hr className="my-4" />
-              <Button variant="outline" className="w-full">
-                로그인
-              </Button>
-              <Button className="w-full">
-                회원가입
-              </Button>
+              {user ? (
+                <>
+                  <span className="text-sm text-muted-foreground py-2">
+                    {user.email}
+                  </span>
+                  <form action={logout}>
+                    <Button variant="outline" className="w-full" type="submit">
+                      로그아웃
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="outline" className="w-full">
+                      로그인
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button className="w-full">
+                      회원가입
+                    </Button>
+                  </Link>
+                </>
+              )}
             </nav>
           </SheetContent>
         </Sheet>

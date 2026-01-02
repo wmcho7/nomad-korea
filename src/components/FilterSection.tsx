@@ -1,60 +1,83 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
+import { MapPin, Wallet, Trees, Sun, RotateCcw } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MapPin, Tag, RotateCcw } from "lucide-react";
-
-const regions = [
-  { value: "all", label: "전체" },
-  { value: "capital", label: "수도권" },
-  { value: "chungcheong", label: "충청" },
-  { value: "yeongnam", label: "영남" },
-  { value: "honam", label: "호남" },
-  { value: "gangwon", label: "강원" },
-  { value: "jeju", label: "제주" },
-];
-
-const characteristics = [
-  { value: "beach", label: "해변도시", emoji: "🏖️" },
-  { value: "metro", label: "대도시", emoji: "🏙️" },
-  { value: "small", label: "소도시", emoji: "🏘️" },
-  { value: "mountain", label: "산악지역", emoji: "⛰️" },
-  { value: "culture", label: "문화도시", emoji: "🎭" },
-];
-
-const sortOptions = [
-  { value: "rating", label: "평점순" },
-  { value: "reviews", label: "리뷰 많은 순" },
-  { value: "cost", label: "생활비 낮은 순" },
-];
+  BUDGET_FILTERS,
+  REGION_FILTERS,
+  ENVIRONMENT_FILTERS,
+  SEASON_FILTERS,
+} from "@/data";
 
 export function FilterSection() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleFilterClick = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.get(key) === value) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `?${queryString}` : "/");
+  };
+
+  const handleReset = () => {
+    router.push("/");
+  };
+
+  const isActive = (key: string, value: string) =>
+    searchParams.get(key) === value;
+
+  const hasAnyFilter =
+    searchParams.has("budget") ||
+    searchParams.has("region") ||
+    searchParams.has("environment") ||
+    searchParams.has("season");
+
   return (
     <section className="bg-white border-b sticky top-16 z-40">
       <div className="container mx-auto px-4 py-4">
-        {/* Region Filter */}
         <div className="flex flex-col gap-4">
-          {/* First Row: Region */}
+          {/* 예산 필터 */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-[60px]">
+              <Wallet className="h-4 w-4" />
+              <span>예산:</span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {BUDGET_FILTERS.map((budget) => (
+                <Button
+                  key={budget.value}
+                  variant={isActive("budget", budget.value) ? "default" : "outline"}
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleFilterClick("budget", budget.value)}
+                >
+                  {budget.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* 지역 필터 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-[60px]">
               <MapPin className="h-4 w-4" />
               <span>지역:</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {regions.map((region) => (
+              {REGION_FILTERS.map((region) => (
                 <Button
                   key={region.value}
-                  variant={region.value === "all" ? "default" : "outline"}
+                  variant={isActive("region", region.value) ? "default" : "outline"}
                   size="sm"
                   className="h-8"
+                  onClick={() => handleFilterClick("region", region.value)}
                 >
                   {region.label}
                 </Button>
@@ -62,64 +85,55 @@ export function FilterSection() {
             </div>
           </div>
 
-          {/* Second Row: Characteristics */}
+          {/* 환경 필터 */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Tag className="h-4 w-4" />
-              <span>특징:</span>
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-[60px]">
+              <Trees className="h-4 w-4" />
+              <span>환경:</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {characteristics.map((char) => (
+              {ENVIRONMENT_FILTERS.map((env) => (
                 <Badge
-                  key={char.value}
-                  variant="outline"
+                  key={env.value}
+                  variant={isActive("environment", env.value) ? "default" : "outline"}
                   className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1.5"
+                  onClick={() => handleFilterClick("environment", env.value)}
                 >
-                  {char.emoji} {char.label}
+                  {env.emoji} {env.label}
                 </Badge>
               ))}
             </div>
           </div>
 
-          {/* Third Row: Sort, Budget, Reset */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">정렬:</span>
-                <Select defaultValue="rating">
-                  <SelectTrigger className="w-[140px] h-9">
-                    <SelectValue placeholder="정렬 기준" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Budget Slider */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-muted-foreground">예산:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">₩30만</span>
-                  <Slider
-                    defaultValue={[30, 100]}
-                    max={150}
-                    min={30}
-                    step={10}
-                    className="w-[120px] md:w-[180px]"
-                  />
-                  <span className="text-sm text-muted-foreground">₩100만</span>
-                </div>
-              </div>
+          {/* 계절 필터 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-[60px]">
+              <Sun className="h-4 w-4" />
+              <span>계절:</span>
             </div>
+            <div className="flex gap-2 flex-wrap">
+              {SEASON_FILTERS.map((season) => (
+                <Badge
+                  key={season.value}
+                  variant={isActive("season", season.value) ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1.5"
+                  onClick={() => handleFilterClick("season", season.value)}
+                >
+                  {season.emoji} {season.label}
+                </Badge>
+              ))}
+            </div>
+          </div>
 
-            {/* Reset Button */}
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
+          {/* 초기화 버튼 */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={handleReset}
+              disabled={!hasAnyFilter}
+            >
               <RotateCcw className="h-4 w-4 mr-1" />
               초기화
             </Button>

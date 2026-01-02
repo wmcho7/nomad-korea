@@ -1,146 +1,91 @@
-"use client";
+import { CityCard } from "@/components/CityCard";
+import { filterCities, getCitiesCount } from "@/lib/api";
+import type { CityFilterOptions, BudgetFilterValue, RegionFilterValue, EnvironmentFilterValue, SeasonFilterValue } from "@/types";
+import {
+  BUDGET_VALUE_TO_LABEL,
+  REGION_VALUE_TO_LABEL,
+  ENVIRONMENT_VALUE_TO_LABEL,
+  SEASON_VALUE_TO_LABEL,
+} from "@/data";
+import { SearchX } from "lucide-react";
 
-import { CityCard, type CityCardProps } from "@/components/CityCard";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Map, ChevronLeft, ChevronRight } from "lucide-react";
+interface CityGridProps {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
 
-// Mock data for demonstration
-const mockCities: CityCardProps[] = [
-  {
-    id: "jeju",
-    name: "제주시",
-    region: "제주특별자치도",
-    imageUrl: "https://images.unsplash.com/photo-1579169326371-b5c8e8b6b4a4?w=800&q=80",
-    rating: 4.3,
-    reviewCount: 128,
-    costLevel: "저렴",
-    internetQuality: "양호",
-    tags: ["바다", "힐링", "자연"],
-  },
-  {
-    id: "busan",
-    name: "부산광역시",
-    region: "부산",
-    imageUrl: "https://images.unsplash.com/photo-1538485399081-7191377e8241?w=800&q=80",
-    rating: 4.5,
-    reviewCount: 256,
-    costLevel: "보통",
-    internetQuality: "좋음",
-    tags: ["도시", "맛집", "해변"],
-  },
-  {
-    id: "gangneung",
-    name: "강릉시",
-    region: "강원도",
-    imageUrl: "https://images.unsplash.com/photo-1596476170875-ec4a4333699d?w=800&q=80",
-    rating: 4.1,
-    reviewCount: 89,
-    costLevel: "저렴",
-    internetQuality: "양호",
-    tags: ["바다", "카페", "조용함"],
-  },
-  {
-    id: "jeonju",
-    name: "전주시",
-    region: "전라북도",
-    imageUrl: "https://images.unsplash.com/photo-1592882595561-2765e8a68e1d?w=800&q=80",
-    rating: 4.2,
-    reviewCount: 95,
-    costLevel: "저렴",
-    internetQuality: "좋음",
-    tags: ["한옥", "맛집", "문화"],
-  },
-  {
-    id: "daejeon",
-    name: "대전광역시",
-    region: "대전",
-    imageUrl: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=800&q=80",
-    rating: 4.0,
-    reviewCount: 142,
-    costLevel: "보통",
-    internetQuality: "좋음",
-    tags: ["교통", "IT", "대도시"],
-  },
-  {
-    id: "chuncheon",
-    name: "춘천시",
-    region: "강원도",
-    imageUrl: "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=800&q=80",
-    rating: 3.9,
-    reviewCount: 67,
-    costLevel: "저렴",
-    internetQuality: "양호",
-    tags: ["호수", "자연", "조용함"],
-  },
-];
+function parseFiltersFromParams(
+  searchParams: { [key: string]: string | string[] | undefined }
+): CityFilterOptions {
+  const budget = searchParams.budget as BudgetFilterValue | undefined;
+  const region = searchParams.region as RegionFilterValue | undefined;
+  const environment = searchParams.environment as EnvironmentFilterValue | undefined;
+  const season = searchParams.season as SeasonFilterValue | undefined;
+  const search = searchParams.q as string | undefined;
 
-export function CityGrid() {
-  const totalCities = 42;
-  const currentPage = 1;
-  const totalPages = 7;
+  return {
+    budget: budget && budget in BUDGET_VALUE_TO_LABEL ? BUDGET_VALUE_TO_LABEL[budget] : null,
+    region: region === "all" ? "전체" : region && region in REGION_VALUE_TO_LABEL ? REGION_VALUE_TO_LABEL[region] : null,
+    environment: environment && environment in ENVIRONMENT_VALUE_TO_LABEL ? ENVIRONMENT_VALUE_TO_LABEL[environment] : null,
+    season: season && season in SEASON_VALUE_TO_LABEL ? SEASON_VALUE_TO_LABEL[season] : null,
+    search: search || null,
+  };
+}
+
+export async function CityGrid({ searchParams = {} }: CityGridProps) {
+  const filters = parseFiltersFromParams(searchParams);
+  const cities = await filterCities(filters, "likes", "desc");
+  const totalCount = await getCitiesCount();
+
+  const hasFilters = Object.values(filters).some((v) => v !== null);
+
+  if (cities.length === 0) {
+    return (
+      <section className="py-6">
+        <div className="container mx-auto px-4">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground">도시 리스트</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              총 <span className="font-semibold text-foreground">0개</span> 도시
+            </p>
+          </div>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <SearchX className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              검색 결과가 없습니다
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              다른 필터 조건을 선택해 보세요
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-6">
       <div className="container mx-auto px-4">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between mb-6">
-          {/* Total Count */}
-          <p className="text-sm text-muted-foreground">
-            총 <span className="font-semibold text-foreground">{totalCities}개</span> 도시
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground">도시 리스트</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {hasFilters ? (
+              <>
+                <span className="font-semibold text-foreground">{cities.length}개</span> 도시 (전체 {totalCount}개)
+              </>
+            ) : (
+              <>
+                총 <span className="font-semibold text-foreground">{cities.length}개</span> 도시
+              </>
+            )}
           </p>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 border rounded-lg p-1">
-            <Button variant="default" size="sm" className="h-8 px-3">
-              <LayoutGrid className="h-4 w-4 mr-1" />
-              그리드
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 px-3">
-              <List className="h-4 w-4 mr-1" />
-              리스트
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 px-3">
-              <Map className="h-4 w-4 mr-1" />
-              지도
-            </Button>
-          </div>
         </div>
 
         {/* City Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {mockCities.map((city) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cities.map((city) => (
             <CityCard key={city.id} {...city} />
           ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="icon" disabled>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">이전 페이지</span>
-          </Button>
-
-          {[1, 2, 3].map((page) => (
-            <Button
-              key={page}
-              variant={page === currentPage ? "default" : "outline"}
-              size="sm"
-              className="w-9 h-9"
-            >
-              {page}
-            </Button>
-          ))}
-
-          <span className="px-2 text-muted-foreground">...</span>
-
-          <Button variant="outline" size="sm" className="w-9 h-9">
-            {totalPages}
-          </Button>
-
-          <Button variant="outline" size="icon">
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">다음 페이지</span>
-          </Button>
         </div>
       </div>
     </section>

@@ -1,22 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Search, Scale, User } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Home, User } from "lucide-react";
 
 const navItems = [
   { href: "/", icon: Home, label: "홈" },
-  { href: "/search", icon: Search, label: "검색" },
-  { href: "/compare", icon: Scale, label: "비교" },
   { href: "/my", icon: User, label: "MY" },
 ];
 
 export function MobileNavigation() {
+  const pathname = usePathname();
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.href === "/";
+          const isActive = pathname === item.href;
 
           return (
             <Link
