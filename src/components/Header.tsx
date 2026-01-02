@@ -6,14 +6,18 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/login/actions";
+
+// TODO: Supabase 환경변수 설정 후 아래 주석 해제
+// import { createClient } from "@/lib/supabase/server";
+// import { logout } from "@/app/login/actions";
 
 const navItems: { href: string; label: string }[] = [];
 
 export async function Header() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // TODO: Supabase 환경변수 설정 후 아래 주석 해제하여 인증 로직 재활성화
+  // const supabase = await createClient();
+  // const { data: { user } } = await supabase.auth.getUser();
+  const user = null; // 임시: 항상 미로그인 상태
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -42,13 +46,15 @@ export async function Header() {
           {user ? (
             <>
               <span className="text-sm text-muted-foreground">
-                {user.email}
+                {user}
               </span>
+              {/* TODO: Supabase 환경변수 설정 후 로그아웃 폼 재활성화
               <form action={logout}>
                 <Button variant="ghost" size="sm" type="submit">
                   로그아웃
                 </Button>
               </form>
+              */}
             </>
           ) : (
             <>
@@ -89,13 +95,15 @@ export async function Header() {
               {user ? (
                 <>
                   <span className="text-sm text-muted-foreground py-2">
-                    {user.email}
+                    {user}
                   </span>
+                  {/* TODO: Supabase 환경변수 설정 후 로그아웃 폼 재활성화
                   <form action={logout}>
                     <Button variant="outline" className="w-full" type="submit">
                       로그아웃
                     </Button>
                   </form>
+                  */}
                 </>
               ) : (
                 <>
